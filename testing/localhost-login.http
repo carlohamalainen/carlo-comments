@@ -1,0 +1,9 @@
+POST http://localhost:3000/v1/admin/login HTTP/1.1
+content-type: application/json
+
+{
+    "user": {
+        "email": "carlo@carlo-hamalainen.net",
+        "password": "{{$processEnv ADMIN_PASS_RAW}}"
+    }
+}

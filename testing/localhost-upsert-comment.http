@@ -1,0 +1,15 @@
+POST http://localhost:8080/update HTTP/1.1
+content-type: application/json
+Authorization: Bearer {{$processEnv ADMIN_TOKEN}}
+
+{
+    "commentID": "12345",
+    "siteID": "nadiah.org",
+    "postID": "/2006/05/04/invasibility-and-food-web-structure-in-assembly-algorithms",
+    "author": "bob",
+    "authorEmail": "nope@example.com",
+    "commentBody": "hahaah this is a comment lols",
+    "timestamp": "2023-06-08T12:34:56.789Z",
+    "isActive": true
+}
+

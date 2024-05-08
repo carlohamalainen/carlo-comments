@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+api/go.work
+
+api/anon-comments-linux-amd64
+
+.envrc

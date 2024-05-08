@@ -1,0 +1,9 @@
+GET http://localhost:8080/v1/comments HTTP/1.1
+content-type: application/json
+
+{
+    "siteID": "nadiah.org",
+    "postID": "/2006/05/04/invasibility-and-food-web-structure-in-assembly-algorithms",
+    "isActive": false
+}
+

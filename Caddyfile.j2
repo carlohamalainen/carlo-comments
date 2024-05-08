@@ -1,0 +1,6 @@
+{{ lookup('env', 'API_HOST') }} {
+    reverse_proxy 127.0.0.1:3000
+    tls {
+        dns digitalocean {{ lookup('env', 'DO_TOKEN') }}
+    }
+}

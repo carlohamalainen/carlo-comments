@@ -1,0 +1,10 @@
+POST https://api.geckobob.net/v1/comments HTTP/1.1
+content-type: application/json
+
+{
+    "siteID": "carlo-hamalainen.net",
+    "postID": "/2007/12/11/installing-minion-pro-fonts",
+    "author": "bobenator",
+    "authorEmail": "bobs@example.com",
+    "commentBody": "wow fonts such nerd"
+}
