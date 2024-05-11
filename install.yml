@@ -64,19 +64,19 @@
         group: app
         mode: 0700
 
-    - name: Add SSH public key (laptop) to authorized_keys
+    - name: Add SSH public key (laptop) to authorized_keys for app
       authorized_key:
         user: app
         key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
         state: present
 
-    - name: Add SSH public key (iOS Prompt) to authorized_keys
+    - name: Add SSH public key (iOS Prompt) to authorized_keys for root
       authorized_key:
         user: root
         key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
         state: present
 
-    - name: Add SSH public key (iOS Prompt) to authorized_keys
+    - name: Add SSH public key (iOS Prompt) to authorized_keys for app
       authorized_key:
         user: app
         key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
