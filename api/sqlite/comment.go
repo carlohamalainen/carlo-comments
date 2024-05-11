@@ -32,8 +32,11 @@ func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment)
 	defer upsert.Close()
 
 	_, err = upsert.Exec(c.CommentID, c.SiteID, c.PostID, time.Time(c.Timestamp), c.Author, c.AuthorEmail, c.CommentBody, c.IsActive)
-	logger.Error("exec failed", "error", err)
-	return err
+	if err != nil {
+		logger.Error("exec failed", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.CommentFilter) ([]conduit.Comment, error) {
