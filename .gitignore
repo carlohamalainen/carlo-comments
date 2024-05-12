@@ -26,3 +26,4 @@ api/anon-comments-linux-amd64
 .envrc
 api/carlo-comments-linux-amd64
 caddy
+api/__debug_*

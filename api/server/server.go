@@ -14,12 +14,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"golang.org/x/time/rate"
 )
+
+
+func (s *Server) limitMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.limiter.Allow() {
+            http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+            return
+		}
+        next.ServeHTTP(w, r)
+    })
+}
+
 
 type Server struct {
 	server *http.Server
 
 	router *mux.Router
+	limiter *rate.Limiter
 
 	Config config.Config
 
@@ -95,6 +109,7 @@ func NewServer(ctx context.Context, db *sqlite.DB, cfg config.Config) *Server {
 
 		router: mux.NewRouter().StrictSlash(true),
 
+		limiter: rate.NewLimiter(rate.Limit(cfg.LimiterRate), cfg.LimiterBurst),
 		logLevel: cfg.LogLevel,
 
 		Logger: logger,

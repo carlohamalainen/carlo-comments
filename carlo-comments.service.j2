@@ -16,6 +16,9 @@ Environment=ADMIN_PASS={{ lookup('env', 'ADMIN_PASS') }}
 Environment=APP_NAME={{ lookup('env', 'APP_NAME') }}
 Environment=CORS_ALLOWED_ORIGINS="https://carlo-hamalainen.net"
 Environment=HANDLER_TIMEOUT="5s"
+Environment=LIMITER_RATE=100
+Environment=LIMITER_BURST=50
+
 Restart=always
 RestartSec=10
 

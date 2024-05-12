@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,6 +17,25 @@ type CommentService struct {
 
 func NewCommentService(db *DB) *CommentService {
 	return &CommentService{db}
+}
+
+func (cs *CommentService) NrComments(ctx context.Context, filter conduit.CommentFilter) (int, error) {
+	query := "SELECT COUNT(*) FROM comments WHERE site_id = ? AND post_id = ?"
+
+	if filter.SiteID == nil {
+		return 0, fmt.Errorf("need SiteID for count query")
+	}
+	if filter.PostID == nil {
+		return 0, fmt.Errorf("need PostID for count query")
+	}
+
+	var count int
+	err := cs.DB.QueryRow(query, filter.SiteID, filter.PostID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment) error {

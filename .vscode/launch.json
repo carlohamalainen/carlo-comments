@@ -18,6 +18,8 @@
                 "APP_NAME":"${env:APP_NAME}",
                 "CORS_ALLOWED_ORIGINS":"*",
                 "HANDLER_TIMEOUT":"1000s",
+                "LIMITER_RATE":"${env:LIMITER_RATE}",
+                "LIMITER_BURST":"${env:LIMITER_BURST}",
             }
         }
     ]

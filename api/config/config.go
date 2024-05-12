@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"strconv"
 	"time"
 )
 
@@ -21,10 +22,15 @@ type Config struct {
 	CorsAllowedOrigins []string
 	HandlerTimeout     time.Duration
 	MaxBodySize        int
+
+	MaxNrComments 	int
+
+	LimiterRate int
+	LimiterBurst int
 }
 
 func GetConfig() (*Config, error) {
-	cfg := &Config{}
+	cfg := &Config {MaxNrComments: 100 }
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
@@ -92,6 +98,28 @@ func GetConfig() (*Config, error) {
 		return nil, fmt.Errorf("error parsing duration: %v", err)
 	}
 	cfg.HandlerTimeout = handlerTimeoutDuration
+
+	limiterRate, ok := os.LookupEnv("LIMITER_RATE")
+	if !ok {
+		return nil, fmt.Errorf("LIMITER_RATE is not set")
+	}
+	num, err := strconv.ParseInt(limiterRate, 10, strconv.IntSize)
+	if err != nil {
+		return nil, fmt.Errorf("LIMITER_RATE bad integer")
+
+	}
+	cfg.LimiterRate = int(num)
+
+	limiterBurst, ok := os.LookupEnv("LIMITER_BURST")
+	if !ok {
+		return nil, fmt.Errorf("LIMITER_BURST is not set")
+	}
+	num, err = strconv.ParseInt(limiterBurst, 10, strconv.IntSize)
+	if err != nil {
+		return nil, fmt.Errorf("LIMITER_BURST bad integer")
+
+	}
+	cfg.LimiterBurst = int(num)
 
 	cfg.MaxBodySize = 8192
 

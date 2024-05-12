@@ -1,10 +1,6 @@
 package server
 
-// FIXME enforce size limits and log request bodies
-
 // FIXME rate limiting
-
-// FIXME overall limits for nr of comments per post
 
 import (
 	"net/http"
@@ -31,6 +27,19 @@ func (s *Server) createComment() http.HandlerFunc {
 		if err := readJSON(ctx, r.Body, &newComment, s.Config.MaxBodySize); err != nil {
 			logger.Error("json decode failed", "error", err)
 			badRequestError(ctx, w)
+			return
+		}
+
+		nr, err := s.commentService.NrComments(ctx, conduit.CommentFilter{SiteID: &newComment.SiteID, PostID: &newComment.PostID})
+		if err != nil {
+			logger.Error("failed to count nr comments on post", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if nr >= s.Config.MaxNrComments {
+			logger.Info("discarding comment due to over capcity", "site_id", newComment.SiteID, "post_id", newComment.PostID)
+			http.Error(w, "Internal server error", http.StatusForbidden)
 			return
 		}
 
@@ -62,7 +71,7 @@ func (s *Server) createComment() http.HandlerFunc {
 			comment.AuthorEmail = newComment.AuthorEmail
 		}
 
-		err := s.commentService.UpsertComment(ctx, &comment)
+		err = s.commentService.UpsertComment(ctx, &comment)
 		if err != nil {
 			// TODO add to conduit/errors.go
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
