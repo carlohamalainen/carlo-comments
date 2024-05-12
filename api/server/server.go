@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/carlohamalainen/carlo-comments/config"
@@ -156,6 +157,7 @@ func (s *Server) healthCheck() http.Handler {
 
 		resp["status"] = "available"
 		resp["message"] = "healthy"
+		resp["now"] = time.Now()
 
 		data["count"] = nr
 
