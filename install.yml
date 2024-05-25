@@ -1,125 +1,128 @@
 ---
 
-- name: build xcaddy locally
-  hosts: localhost
-  connection: local
+# - name: build xcaddy locally
+#   hosts: localhost
+#   connection: local
 
-  tasks:
-    - name: xcaddy install and build caddy
-      shell: |
-        go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-        GOOS=linux GOARCH=amd64 xcaddy build --with github.com/caddy-dns/digitalocean
+#   tasks:
+#     - name: xcaddy install and build caddy
+#       shell: |
+#         go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+#         GOOS=linux GOARCH=amd64 xcaddy build --with github.com/caddy-dns/digitalocean
 
-    - name: build carlo-comments
-      shell: |
-        GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ CGO_ENABLED=1 go build -o carlo-comments-linux-amd64 main.go
-      args:
-        chdir: api
+#     - name: build carlo-comments
+#       shell: |
+#         GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ CGO_ENABLED=1 go build -o carlo-comments-linux-amd64 main.go
+#       args:
+#         chdir: api
 
 - name: Deploy
   hosts: digitalocean
   become: yes
   remote_user: root
+  vars:
+    app_home: /home/app
+    elm_deploy_dir: "{{ app_home }}/elm-admin"
 
   tasks:
 
-    - name: Install required packages
-      apt:
-        name:
-          - wget
-          - curl
-          - tar
-          - zip
-          - unzip
-          - rsync
-          - htop
-          - btop
-          - sqlite3
-          - sqlite3-doc
-          - sqlite-utils
-          - sqlite3-tools
-          - golang
-          - musl
-        state: present
+    # - name: Install required packages
+    #   apt:
+    #     name:
+    #       - wget
+    #       - curl
+    #       - tar
+    #       - zip
+    #       - unzip
+    #       - rsync
+    #       - htop
+    #       - btop
+    #       - sqlite3
+    #       - sqlite3-doc
+    #       - sqlite-utils
+    #       - sqlite3-tools
+    #       - golang
+    #       - musl
+    #     state: present
 
-    - name: Create app user
-      user:
-        name: app
-        state: present
-        shell: /bin/bash
+    # - name: Create app user
+    #   user:
+    #     name: app
+    #     state: present
+    #     shell: /bin/bash
 
-    - name: Create logs directory for app user
-      file:
-        path: /home/app/logs
-        state: directory
-        owner: app
-        group: app
-        mode: 0700
+    # - name: Create logs directory for app user
+    #   file:
+    #     path: "{{ app_home }}/logs"
+    #     state: directory
+    #     owner: app
+    #     group: app
+    #     mode: 0700
 
-    - name: Create .ssh directory for app user
-      file:
-        path: /home/app/.ssh
-        state: directory
-        owner: app
-        group: app
-        mode: 0700
+    # - name: Create .ssh directory for app user
+    #   file:
+    #     path: "{{ app_home }}/.ssh
+    #     state: directory
+    #     owner: app
+    #     group: app
+    #     mode: 0700
 
-    - name: Add SSH public key (laptop) to authorized_keys for app
-      authorized_key:
-        user: app
-        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-        state: present
+    # - name: Add SSH public key (laptop) to authorized_keys for app
+    #   authorized_key:
+    #     user: app
+    #     key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    #     state: present
 
-    - name: Add SSH public key (iOS Prompt) to authorized_keys for root
-      authorized_key:
-        user: root
-        key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
-        state: present
+    # - name: Add SSH public key (iOS Prompt) to authorized_keys for root
+    #   authorized_key:
+    #     user: root
+    #     key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
+    #     state: present
 
-    - name: Add SSH public key (iOS Prompt) to authorized_keys for app
-      authorized_key:
-        user: app
-        key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
-        state: present
+    # - name: Add SSH public key (iOS Prompt) to authorized_keys for app
+    #   authorized_key:
+    #     user: app
+    #     key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
+    #     state: present
 
-    - name: Stop carlo-comments service
-      systemd:
-        name: carlo-comments
-        state: stopped
-      ignore_errors: yes
+    # - name: Stop carlo-comments service
+    #   systemd:
+    #     name: carlo-comments
+    #     state: stopped
+    #   ignore_errors: yes
 
-    - name: Copy carlo-comments-linux-amd64 /home/app
-      copy:
-        src: api/carlo-comments-linux-amd64
-        dest: /home/app/
-        owner: app
-        group: app
-        mode: 0755
+    # - name: Copy carlo-comments-linux-amd64
+    #   copy:
+    #     src: api/carlo-comments-linux-amd64
+    #     dest: "{{ app_home }}/"
+    #     owner: app
+    #     group: app
+    #     mode: 0755
 
-    - name: Create carlo-comments systemd service file
-      template:
-        src: carlo-comments.service.j2
-        dest: /etc/systemd/system/carlo-comments.service
-        owner: root
-        group: root
-        mode: 0644
+    # - name: Create carlo-comments systemd service file
+    #   template:
+    #     src: carlo-comments.service.j2
+    #     dest: /etc/systemd/system/carlo-comments.service
+    #     owner: root
+    #     group: root
+    #     mode: 0644
 
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
+    # - name: Reload systemd daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
 
-    - name: Enable carlo-comments service
-      systemd:
-        name: carlo-comments
-        enabled: yes
-      become: yes
+    # - name: Enable carlo-comments service
+    #   systemd:
+    #     name: carlo-comments
+    #     enabled: yes
+    #   become: yes
 
-    - name: Start carlo-comments service
-      systemd:
-        name: carlo-comments
-        state: started
-      become: yes
+    # - name: Start carlo-comments service
+    #   systemd:
+    #     name: carlo-comments
+    #     state: started
+    #   become: yes
 
     - name: Stop Caddy service
       systemd:
@@ -127,33 +130,33 @@
         state: stopped
       ignore_errors: yes
 
-    - name: copy caddy binary to server
-      copy:
-        src: caddy
-        dest: /usr/bin/caddy
-        mode: 0755
+    # - name: copy caddy binary to server
+    #   copy:
+    #     src: caddy
+    #     dest: /usr/bin/caddy
+    #     mode: 0755
 
-    - name: Create caddy group
-      group:
-        name: caddy
-        system: yes
+    # - name: Create caddy group
+    #   group:
+    #     name: caddy
+    #     system: yes
 
-    - name: Create caddy user
-      user:
-        name: caddy
-        system: yes
-        group: caddy
-        home: /var/lib/caddy
-        shell: /usr/sbin/nologin
-        comment: "Caddy web server"
+    # - name: Create caddy user
+    #   user:
+    #     name: caddy
+    #     system: yes
+    #     group: caddy
+    #     home: /var/lib/caddy
+    #     shell: /usr/sbin/nologin
+    #     comment: "Caddy web server"
 
-    - name: Create Caddy configuration directory
-      file:
-        path: /etc/caddy
-        state: directory
-        owner: root
-        group: caddy
-        recurse: yes
+    # - name: Create Caddy configuration directory
+    #   file:
+    #     path: /etc/caddy
+    #     state: directory
+    #     owner: root
+    #     group: caddy
+    #     recurse: yes
 
     - name: Create Caddyfile
       template:
@@ -163,21 +166,21 @@
         group: root
         mode: 0644
 
-    - name: Create Caddy systemd service
-      get_url:
-        url: https://raw.githubusercontent.com/caddyserver/dist/master/init/caddy.service
-        dest: /etc/systemd/system/caddy.service
+    # - name: Create Caddy systemd service
+    #   get_url:
+    #     url: https://raw.githubusercontent.com/caddyserver/dist/master/init/caddy.service
+    #     dest: /etc/systemd/system/caddy.service
 
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
+    # - name: Reload systemd daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
 
-    - name: Enable Caddy service
-      systemd:
-        name: caddy
-        enabled: yes
-      become: yes
+    # - name: Enable Caddy service
+    #   systemd:
+    #     name: caddy
+    #     enabled: yes
+    #   become: yes
 
     - name: Start Caddy service
       systemd:
@@ -185,87 +188,106 @@
         state: started
       become: yes
 
-    - name: Stop Promtail service
-      systemd:
-        name: promtail
-        state: stopped
-      ignore_errors: yes
+    # - name: Stop Promtail service
+    #   systemd:
+    #     name: promtail
+    #     state: stopped
+    #   ignore_errors: yes
 
-    - name: Create Promtail directory
+    # - name: Create Promtail directory
+    #   file:
+    #     path: "{{ app_home }}/promtail"
+    #     state: directory
+    #     owner: app
+    #     group: app
+    #     mode: 0755
+
+    # - name: Download Promtail zip file
+    #   get_url:
+    #     url: https://github.com/grafana/loki/releases/download/v2.9.8/promtail-linux-amd64.zip
+    #     dest: "{{ app_home }}/promtail/promtail-linux-amd64.zip"
+    #     owner: app
+    #     group: app
+    #     mode: 0755
+
+    # - name: Extract Promtail zip file
+    #   unarchive:
+    #     src: "{{ app_home }}/promtail/promtail-linux-amd64.zip"
+    #     dest: "{{ app_home }}/promtail"
+    #     remote_src: yes
+    #     owner: app
+    #     group: app
+    #     mode: 0755
+
+    # - name: Copy Promtail configuration file
+    #   template:
+    #     src: promtail-config.yaml.j2
+    #     dest: "{{ app_home }}/promtail/config.yaml"
+    #     owner: app
+    #     group: app
+    #     mode: 0644
+
+    # - name: Create journal.d directory
+    #   file:
+    #     path: /etc/systemd/journald.conf.d
+    #     state: directory
+    #     owner: root
+    #     group: app
+    #     mode: 0700
+
+    # - name: Copy Promtail systemd logging configuration file
+    #   template:
+    #     src: systemd-promtail.conf
+    #     dest: /etc/systemd/journald.conf.d/promtail.conf
+    #     owner: root
+    #     group: root
+    #     mode: 0755
+
+    # - name: Create Promtail systemd service
+    #   template:
+    #     src: promtail.service.j2
+    #     dest: /etc/systemd/system/promtail.service
+    #     owner: root
+    #     group: root
+    #     mode: 0644
+
+    # - name: Reload systemd daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
+
+    # - name: Reload journald daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
+
+    # - name: Enable Promtail service
+    #   systemd:
+    #     name: promtail
+    #     enabled: yes
+    #   become: yes
+
+    # - name: Start Promtail service
+    #   systemd:
+    #     name: promtail
+    #     state: started
+    #   become: yes
+
+
+#########################
+
+    - name: Create elm-admin directory
       file:
-        path: /home/app/promtail
+        path: "{{ elm_deploy_dir }}"
         state: directory
         owner: app
         group: app
         mode: 0755
 
-    - name: Download Promtail zip file
-      get_url:
-        url: https://github.com/grafana/loki/releases/download/v2.9.8/promtail-linux-amd64.zip
-        dest: /home/app/promtail/promtail-linux-amd64.zip
-        owner: app
-        group: app
-        mode: 0755
-
-    - name: Extract Promtail zip file
-      unarchive:
-        src: /home/app/promtail/promtail-linux-amd64.zip
-        dest: /home/app/promtail
-        remote_src: yes
-        owner: app
-        group: app
-        mode: 0755
-
-    - name: Copy Promtail configuration file
+    - name: index.html
       template:
-        src: promtail-config.yaml.j2
-        dest: /home/app/promtail/config.yaml
-        owner: app
-        group: app
-        mode: 0644
-
-    - name: Create journal.d directory
-      file:
-        path: /etc/systemd/journald.conf.d
-        state: directory
-        owner: root
-        group: app
-        mode: 0700
-
-    - name: Copy Promtail systemd logging configuration file
-      template:
-        src: systemd-promtail.conf
-        dest: /etc/systemd/journald.conf.d/promtail.conf
-        owner: root
-        group: root
-        mode: 0755
-
-    - name: Create Promtail systemd service
-      template:
-        src: promtail.service.j2
-        dest: /etc/systemd/system/promtail.service
+        src: elm-admin/index.html
+        dest: "{{ elm_deploy_dir }}"
         owner: root
         group: root
         mode: 0644
-
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
-
-    - name: Reload journald daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
-
-    - name: Enable Promtail service
-      systemd:
-        name: promtail
-        enabled: yes
-      become: yes
-
-    - name: Start Promtail service
-      systemd:
-        name: promtail
-        state: started
-      become: yes
