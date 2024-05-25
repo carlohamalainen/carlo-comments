@@ -1,7 +1,5 @@
 package server
 
-// FIXME rate limiting
-
 import (
 	"net/http"
 	"time"

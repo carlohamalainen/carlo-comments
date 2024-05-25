@@ -6,8 +6,8 @@ import (
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/carlohamalainen/carlo-comments/config"
+	"github.com/carlohamalainen/carlo-comments/s3"
 	"github.com/carlohamalainen/carlo-comments/server"
-	"github.com/carlohamalainen/carlo-comments/sqlite"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	ctx := conduit.WithLogger(context.Background(), logger)
 
-	db, err := sqlite.Open(ctx, *cfg)
+	db, err := s3.Open(ctx, *cfg)
 	if err != nil {
 		logger.Error("failed to open database", "error", err)
 		panic(err)

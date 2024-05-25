@@ -53,7 +53,7 @@ type CommentService interface {
 	NrComments(context.Context, CommentFilter) (int, error)
 	UpsertComment(context.Context, *Comment) error
 	Comments(context.Context, CommentFilter) ([]Comment, error)
-	DeleteComment(context.Context, string) error
+	DeleteComment(context.Context, *Comment) error
 }
 
 // Validation utilities

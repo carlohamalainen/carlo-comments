@@ -8,6 +8,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/api/main.go",
             // "program": "${workspaceFolder}/api/cmd/cli/main.go",
+            // "program": "${workspaceFolder}/api/cmd/s3/main.go",
             "env": {
                 "PORT":"${env:PORT}",
                 "SQLITE_PATH":"${env:SQLITE_PATH}",

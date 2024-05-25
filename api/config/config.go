@@ -4,14 +4,20 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type Config struct {
+	// sqlite config
+	SqlitePath string
+
+	// S3 config
+	S3Region     string
+	S3BucketName string
+
 	Port               string
-	SqlitePath         string
 	HmacSecret         string
 	CommentHost        string
 	AdminUser          string
@@ -23,26 +29,45 @@ type Config struct {
 	HandlerTimeout     time.Duration
 	MaxBodySize        int
 
-	MaxNrComments 	int
+	MaxNrComments int
 
-	LimiterRate int
+	LimiterRate  int
 	LimiterBurst int
 }
 
 func GetConfig() (*Config, error) {
-	cfg := &Config {MaxNrComments: 100 }
+	cfg := &Config{MaxNrComments: 100}
+
+	sqlitePath, ok := os.LookupEnv("SQLITE_PATH")
+	if ok {
+		cfg.SqlitePath = sqlitePath
+	}
+
+	s3BucketName, ok := os.LookupEnv("S3_BUCKET")
+	if ok {
+		cfg.S3BucketName = s3BucketName
+	}
+	s3Region, ok := os.LookupEnv("S3_REGION")
+	if ok {
+		cfg.S3Region = s3Region
+	}
+
+	storageOK := false
+	if cfg.SqlitePath != "" && cfg.S3BucketName == "" && cfg.S3Region == "" {
+		storageOK = true
+	}
+	if cfg.SqlitePath == "" && cfg.S3BucketName != "" && cfg.S3Region != "" {
+		storageOK = true
+	}
+	if !storageOK {
+		return nil, fmt.Errorf("need sqlite or S3 environment")
+	}
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		return nil, fmt.Errorf("PORT is not set")
 	}
 	cfg.Port = port
-
-	sqlitePath, ok := os.LookupEnv("SQLITE_PATH")
-	if !ok {
-		return nil, fmt.Errorf("SQLITE_PATH is not set")
-	}
-	cfg.SqlitePath = sqlitePath
 
 	hmacSecret, ok := os.LookupEnv("HMAC_SECRET")
 	if !ok {

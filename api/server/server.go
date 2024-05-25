@@ -9,30 +9,30 @@ import (
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/carlohamalainen/carlo-comments/config"
+	"github.com/carlohamalainen/carlo-comments/s3"
 	"github.com/carlohamalainen/carlo-comments/simple"
-	"github.com/carlohamalainen/carlo-comments/sqlite"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"golang.org/x/time/rate"
 )
 
+// TODO import/export for admin
 
 func (s *Server) limitMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !s.limiter.Allow() {
-            http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
-            return
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
 		}
-        next.ServeHTTP(w, r)
-    })
+		next.ServeHTTP(w, r)
+	})
 }
-
 
 type Server struct {
 	server *http.Server
 
-	router *mux.Router
+	router  *mux.Router
 	limiter *rate.Limiter
 
 	Config config.Config
@@ -97,7 +97,7 @@ func (s *Server) SetKnown(ctx context.Context, site_id string, post_id string) {
 	s.knownPosts[site_id][post_id] = true
 }
 
-func NewServer(ctx context.Context, db *sqlite.DB, cfg config.Config) *Server {
+func NewServer(ctx context.Context, db *s3.DB, cfg config.Config) *Server {
 	logger := conduit.GetLogger(ctx)
 
 	s := Server{
@@ -109,7 +109,7 @@ func NewServer(ctx context.Context, db *sqlite.DB, cfg config.Config) *Server {
 
 		router: mux.NewRouter().StrictSlash(true),
 
-		limiter: rate.NewLimiter(rate.Limit(cfg.LimiterRate), cfg.LimiterBurst),
+		limiter:  rate.NewLimiter(rate.Limit(cfg.LimiterRate), cfg.LimiterBurst),
 		logLevel: cfg.LogLevel,
 
 		Logger: logger,
@@ -137,7 +137,7 @@ func NewServer(ctx context.Context, db *sqlite.DB, cfg config.Config) *Server {
 	}
 
 	s.UserService = simple.NewUserService(s.Config.HmacSecret)
-	s.commentService = sqlite.NewCommentService(db)
+	s.commentService = s3.NewCommentService(db, cfg.S3Region, cfg.S3BucketName)
 
 	// Maybe State should be a conduit as well, with an in-memory thing...
 	s.InitState()

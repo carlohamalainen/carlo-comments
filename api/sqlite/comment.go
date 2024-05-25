@@ -32,7 +32,7 @@ func (cs *CommentService) NrComments(ctx context.Context, filter conduit.Comment
 	var count int
 	err := cs.DB.QueryRow(query, filter.SiteID, filter.PostID).Scan(&count)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	return count, nil
@@ -110,7 +110,7 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 	return comments, nil
 }
 
-func (cs *CommentService) DeleteComment(ctx context.Context, commentID string) error {
+func (cs *CommentService) DeleteComment(ctx context.Context, comment *conduit.Comment) error {
 	logger := conduit.GetLogger(ctx)
 
 	stmt, err := cs.DB.Prepare("DELETE FROM comments WHERE comment_id = ")
@@ -120,9 +120,9 @@ func (cs *CommentService) DeleteComment(ctx context.Context, commentID string) e
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(commentID)
+	_, err = stmt.Exec(comment.CommentID)
 	if err != nil {
-		logger.Error("failed to DELETE comment", "error", err, "comment_id", commentID)
+		logger.Error("failed to DELETE comment", "error", err, "comment_id", comment.CommentID)
 		return err
 	}
 

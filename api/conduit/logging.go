@@ -28,9 +28,16 @@ func GetLogger(ctx context.Context) *slog.Logger {
 }
 
 func NewLogger(cfg config.Config) (func(), *slog.Logger) {
-	handler := newDailyFileHandler(cfg.LogDirectory, cfg.AppName)
-	logger := slog.New(handler)
-	return handler.Flush, logger
+	switch cfg.LogDirectory {
+	case "stdout":
+		handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel})
+		logger := slog.New(handler)
+		return func() {}, logger
+	default:
+		handler := newDailyFileHandler(cfg.LogDirectory, cfg.AppName)
+		logger := slog.New(handler)
+		return handler.Flush, logger
+	}
 }
 
 type dailyFileHandler struct {

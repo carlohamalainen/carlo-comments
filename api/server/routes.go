@@ -11,7 +11,6 @@ const (
 	FreeRange                    // query can be anything at all (only for admin interface)
 )
 
-
 func (s *Server) routes() {
 	cors := cors.New(cors.Options{AllowedOrigins: s.Config.CorsAllowedOrigins})
 	s.router.Use(s.limitMiddleware)

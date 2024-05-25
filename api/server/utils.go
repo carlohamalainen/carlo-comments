@@ -46,7 +46,7 @@ func readJSON(ctx context.Context, body io.Reader, input interface{}, maxLength 
 			return fmt.Errorf("body exceeds maximum length %v", maxLength)
 		}
 		buf = buf[:n]
-		
+
 		err = json.Unmarshal(buf, input)
 		if err != nil {
 			logger.Debug("failed to decode JSON", "error", err, "body", string(buf))

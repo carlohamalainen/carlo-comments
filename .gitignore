@@ -27,3 +27,6 @@ api/anon-comments-linux-amd64
 api/carlo-comments-linux-amd64
 caddy
 api/__debug_*
+
+api/.envrc
+k8s*kubeconfig.yaml
