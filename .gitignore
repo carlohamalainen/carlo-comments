@@ -30,3 +30,5 @@ api/__debug_*
 
 api/.envrc
 k8s*kubeconfig.yaml
+frontend/elm-stuff/*
+frontend/node_modules/*
