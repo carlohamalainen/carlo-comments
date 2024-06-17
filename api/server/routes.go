@@ -1,6 +1,9 @@
 package server
 
 import (
+	"fmt"
+	"log/slog"
+
 	"github.com/rs/cors"
 )
 
@@ -11,10 +14,23 @@ const (
 	FreeRange                    // query can be anything at all (only for admin interface)
 )
 
+type printfLogger struct{
+	slog *slog.Logger
+}
+
+func (l *printfLogger) Printf(format string, args ...interface{}) {
+	l.slog.Info("cors", "message", fmt.Sprintf(format, args...))
+}
+
 func (s *Server) routes() {
-	cors := cors.New(cors.Options{AllowedOrigins: s.Config.CorsAllowedOrigins})
-	s.router.Use(s.limitMiddleware)
+	cors := cors.New(cors.Options{
+		AllowedOrigins: s.Config.CorsAllowedOrigins,
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		Logger: &printfLogger{slog:s.Logger},
+	})
 	s.router.Use(cors.Handler)
+	s.router.Use(s.limitMiddleware)
 	s.router.Use(Logger(s.Logger))
 
 	v1 := s.router.PathPrefix("/v1").Subrouter()
@@ -22,8 +38,10 @@ func (s *Server) routes() {
 	noAuth := v1.PathPrefix("").Subrouter()
 	{
 		noAuth.Handle("/health", s.healthCheck()).Methods("GET")
-		noAuth.Handle("/comments", s.createComment()).Methods("POST")
-		noAuth.Handle("/comments", s.getComments(ActiveOnly)).Methods("GET")
+
+		// Need OPTIONS here otherwise the cors handler won't match anything!
+		noAuth.Handle("/comments", s.createComment()).Methods("POST", "OPTIONS")
+		noAuth.Handle("/comments", s.getComments(ActiveOnly)).Methods("GET", "OPTIONS")
 	}
 
 	admin := v1.PathPrefix("/admin").Subrouter()
