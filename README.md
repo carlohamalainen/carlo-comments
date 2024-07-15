@@ -15,9 +15,7 @@ Ensure all secrets and configs set:
 ```
 
 ```shell
-docker build -t carlo-comments:v1 .
-docker tag carlo-comments:v1 registry.digitalocean.com/carlo-containers/carlo-comments:v1
-docker push registry.digitalocean.com/carlo-containers/carlo-comments:v1
+export MY_VERSION=v6 && docker build -t carlo-comments:${MY_VERSION} . && docker tag carlo-comments:${MY_VERSION} registry.digitalocean.com/carlo-containers/carlo-comments:${MY_VERSION} && docker push registry.digitalocean.com/carlo-containers/carlo-comments:${MY_VERSION}
 
 ```shell
 $ docker image ls
@@ -111,4 +109,27 @@ ingress-nginx   ingress-nginx-controller   2/2     2            2           21m
 kube-system     coredns                    2/2     2            2           26m
 kube-system     hubble-relay               1/1     1            1           28m
 kube-system     hubble-ui                  1/1     1            1           27m
+```
+
+
+# Promtail / Loki
+
+```shell
+$ helm install promtail grafana/promtail -f promtail-values.yaml
+NAME: promtail
+LAST DEPLOYED: Mon Jul 15 07:42:00 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+***********************************************************************
+ Welcome to Grafana Promtail
+ Chart version: 6.16.3
+ Promtail version: 3.0.0
+***********************************************************************
+
+Verify the application is working by running these commands:
+* kubectl --namespace default port-forward daemonset/promtail 3101
+* curl http://127.0.0.1:3101/metrics
 ```

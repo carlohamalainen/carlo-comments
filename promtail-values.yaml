@@ -1,0 +1,42 @@
+config:
+  clients:
+    - url: ${LOKI_URL}
+      basic_auth:
+        username: ${LOKI_USER}
+        password: ${LOKI_API_TOKEN}
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - labeldrop:
+          - filename
+          - stream
+
+serviceMonitor:
+  enabled: false
+
+extraArgs:
+  - -config.expand-env=true
+
+extraEnv:
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+
+  - name: LOKI_URL
+    valueFrom:
+      secretKeyRef:
+        name: carlo-comments-secrets
+        key: LOKI_URL
+
+  - name: LOKI_USER
+    valueFrom:
+      secretKeyRef:
+        name: carlo-comments-secrets
+        key: LOKI_USER
+
+  - name: LOKI_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: carlo-comments-secrets
+        key: LOKI_API_TOKEN
