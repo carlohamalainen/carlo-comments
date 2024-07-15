@@ -31,7 +31,10 @@ func main() {
 
 	updater := func() {
 		logger.Info("updating known hosts", "hosts", srv.Config.CommentHost)
-		srv.InitHost(ctx, srv.Config.CommentHost)
+		err := srv.InitHost(ctx, srv.Config.CommentHost)
+		if err != nil {
+			logger.Error("updater failed", "error", err)
+		}
 	}
 
 	updater()

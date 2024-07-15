@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/carlohamalainen/carlo-comments/config"
+	"github.com/google/safeopen"
 )
 
 type ctxKey string
@@ -60,7 +61,7 @@ func (h *dailyFileHandler) Enabled(_ context.Context, _ slog.Level) bool {
 
 func (h *dailyFileHandler) Handle(_ context.Context, r slog.Record) error {
 	logFile := h.getLogFileName()
-	file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := safeopen.OpenFileAt(h.logDir, logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

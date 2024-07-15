@@ -76,6 +76,16 @@ func (s *Server) createComment() http.HandlerFunc {
 			return
 		}
 
+		go func() {
+			err := Notify(&s.Config, &comment) // FIXME logging
+			if err != nil {
+				logger.Error("failed to send notification email", "error", err.Error())
+			} else {
+				logger.Info("sent notification email", "to", s.Config.AdminUser)
+
+			}
+		}()
+
 		w.WriteHeader(http.StatusCreated)
 	}
 }
@@ -85,7 +95,7 @@ func (s *Server) getComments(filterMode FilterMode) http.HandlerFunc {
 		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "getComments")
 		ctx := conduit.WithLogger(r.Context(), logger)
 
-		if r.Method != http.MethodGet {
+		if r.Method != http.MethodPost {
 			// TODO add to conduit/errors.go
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return

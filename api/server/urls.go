@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"context"
 	"log/slog"
 	"net/http"
@@ -30,11 +31,32 @@ func (s *Server) InitHost(ctx context.Context, host string) error {
 }
 
 func scrape(logger *slog.Logger, pageURL string) ([]string, error) {
+	// The simple thing here would be to do
+	// resp, err := http.Get(pageURL)
+	// but gosec then complains about https://cwe.mitre.org/data/definitions/88.html
 
-	resp, err := http.Get(pageURL)
+	// Intead, parse the URL:
+	parsedURL, err := url.Parse(pageURL)
+	if err != nil {
+		logger.Error("failed to parse URL", "error", err)
+		return nil, fmt.Errorf("invalid URL: %v", err)
+	}
+	// Ensure that it's http or https:
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		logger.Error("invalid URL scheme", "scheme", parsedURL.Scheme)
+		return nil, fmt.Errorf("invalid URL scheme: %s", parsedURL.Scheme)
+	}
+	// Construct a GET request using the parsed URL:
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	if err != nil {
+		logger.Error("failed to create request", "error", err)
+		return nil, err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		logger.Error("failed to get page", "error", err)
-		return make([]string, 0), err
+		return nil, err
 	}
 	defer resp.Body.Close()
 

@@ -24,9 +24,11 @@ func (l *printfLogger) Printf(format string, args ...interface{}) {
 
 func (s *Server) routes() {
 	cors := cors.New(cors.Options{
+		AllowCredentials: true,
 		AllowedOrigins: s.Config.CorsAllowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		// AllowedHeaders: []string{"Content-Type", "Authorization"},
+		AllowedHeaders: []string{"*"},
 		Logger: &printfLogger{slog:s.Logger},
 	})
 	s.router.Use(cors.Handler)
@@ -37,11 +39,11 @@ func (s *Server) routes() {
 
 	noAuth := v1.PathPrefix("").Subrouter()
 	{
-		noAuth.Handle("/health", s.healthCheck()).Methods("GET")
+		noAuth.Handle("/health", s.healthCheck()).Methods("GET") // FIXME healthz as per convention; kubernetes config change too
 
 		// Need OPTIONS here otherwise the cors handler won't match anything!
-		noAuth.Handle("/comments", s.createComment()).Methods("POST", "OPTIONS")
-		noAuth.Handle("/comments", s.getComments(ActiveOnly)).Methods("GET", "OPTIONS")
+		noAuth.Handle("/comments/new", s.createComment()).Methods("POST", "OPTIONS")
+		noAuth.Handle("/comments", s.getComments(ActiveOnly)).Methods("POST", "OPTIONS")
 	}
 
 	admin := v1.PathPrefix("/admin").Subrouter()
@@ -52,7 +54,7 @@ func (s *Server) routes() {
 	comments := admin.PathPrefix("/comments").Subrouter()
 	comments.Use(s.authenticate())
 	{
-		comments.Handle("", s.upsertComment()).Methods("POST")
-		comments.Handle("", s.getComments(FreeRange)).Methods("GET")
+		comments.Handle("/new", s.upsertComment()).Methods("POST")
+		comments.Handle("", s.getComments(FreeRange)).Methods("POST")
 	}
 }

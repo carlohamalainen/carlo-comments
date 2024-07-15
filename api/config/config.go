@@ -16,6 +16,7 @@ type Config struct {
 	// S3 config
 	S3Region     string
 	S3BucketName string
+	SESIdentity string
 
 	Port               string
 	HmacSecret         string
@@ -62,6 +63,12 @@ func GetConfig() (*Config, error) {
 	if !storageOK {
 		return nil, fmt.Errorf("need sqlite or S3 environment")
 	}
+
+	sesIdentity, ok := os.LookupEnv("SES_IDENTITY")
+	if !ok {
+		return nil, fmt.Errorf("SES_IDENTITY is not set")
+	}
+	cfg.SESIdentity = sesIdentity
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
@@ -146,7 +153,7 @@ func GetConfig() (*Config, error) {
 	}
 	cfg.LimiterBurst = int(num)
 
-	cfg.MaxBodySize = 8192
+	cfg.MaxBodySize = 4*8192
 
 	return cfg, nil
 }
