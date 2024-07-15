@@ -19,7 +19,7 @@ spec:
       - name: regcred
       containers:
       - name: carlo-comments
-        image: registry.digitalocean.com/carlo-containers/carlo-comments:v5
+        image: registry.digitalocean.com/carlo-containers/carlo-comments:v11
         ports:
         - containerPort: 3000
 
@@ -127,3 +127,10 @@ spec:
             secretKeyRef:
               name: carlo-comments-secrets
               key: S3_BUCKET
+
+        - name: SES_IDENTITY
+          valueFrom:
+            secretKeyRef:
+              name: carlo-comments-secrets
+              key: SES_IDENTITY
+
