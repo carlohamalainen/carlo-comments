@@ -5,7 +5,6 @@ set -e
 # set -x
 
 # The Promtail daemonset runs in the default namespace.
-
 NAMESPACE=default
 SECRETS=carlo-comments-secrets
 kubectl -n ${NAMESPACE} delete secret ${SECRETS} || echo "${SECRETS}"
@@ -30,7 +29,10 @@ kubectl create secret generic ${SECRETS} \
     --from-literal=ADMIN_PASS=${ADMIN_PASS} \
     --from-literal=S3_REGION=${S3_REGION} \
     --from-literal=S3_BUCKET=${S3_BUCKET} \
-    --from-literal=SES_IDENTITY=${SES_IDENTITY}
+    --from-literal=SES_IDENTITY=${SES_IDENTITY} \
+    --from-literal=CF_SITE_KEY=${CF_SITE_KEY} \
+    --from-literal=CF_SECRET_KEY=${CF_SECRET_KEY}
+
 kubectl -n ${NAMESPACE} describe secret ${SECRETS}
 
 REGISTRY=regcred
