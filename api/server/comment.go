@@ -1,18 +1,60 @@
 package server
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/google/uuid"
 )
 
+func getClientIP(r *http.Request) string {
+    ip := r.Header.Get("X-Real-IP")
+    if ip != "" {
+        return ip
+    }
+
+    ips := r.Header.Get("X-Forwarded-For")
+    if ips != "" {
+        ipList := strings.Split(ips, ",")
+        if len(ipList) > 0 {
+            return strings.TrimSpace(ipList[0])
+        }
+    }
+
+    return r.RemoteAddr
+}
+
+func logRequestHeaders(logger *slog.Logger, r *http.Request) {
+    headers := make(map[string]string)
+    for name, values := range r.Header {
+		switch len(values) {
+		case 0:
+			continue
+		case 1:
+			headers[name] = values[0]
+		default:
+			headers[name] = fmt.Sprintf("%v", values)
+		}
+    }
+
+    logger.Info("Request headers",
+        "method", r.Method,
+        "url", r.URL.String(),
+        "headers", headers,
+    )
+}
+
 func (s *Server) createComment() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "createComment")
+		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "createComment", "client_ip", getClientIP(r))
 		ctx := conduit.WithLogger(r.Context(), logger)
+
+		logRequestHeaders(logger, r)
 
 		if r.Method != http.MethodPost {
 			// TODO add to conduit/errors.go
@@ -25,6 +67,18 @@ func (s *Server) createComment() http.HandlerFunc {
 		if err := readJSON(ctx, r.Body, &newComment, s.Config.MaxBodySize); err != nil {
 			logger.Error("json decode failed", "error", err)
 			badRequestError(ctx, w)
+			return
+		}
+
+		if newComment.TurnstileToken == "" {
+			logger.Error("turnstile token empty")
+			http.Error(w, "Internal server error", http.StatusBadRequest)
+			return
+		}
+
+		if _, err := VerifyTurnstileToken(newComment.TurnstileToken, s.Config.CfSecretKey); err != nil {
+			logger.Error("turnstile token rejected", "error", err, "turnstile_token", newComment.TurnstileToken)
+			http.Error(w, "Internal server error", http.StatusBadRequest)
 			return
 		}
 
@@ -62,6 +116,7 @@ func (s *Server) createComment() http.HandlerFunc {
 		}
 		comment.SiteID = newComment.SiteID
 
+		comment.SourceAddress = getClientIP(r)
 		comment.Author = Sanitize(newComment.Author)
 		comment.CommentBody = Sanitize(newComment.CommentBody)
 
@@ -77,7 +132,7 @@ func (s *Server) createComment() http.HandlerFunc {
 		}
 
 		go func() {
-			err := Notify(&s.Config, &comment) // FIXME logging
+			err := Notify(&s.Config, &comment)
 			if err != nil {
 				logger.Error("failed to send notification email", "error", err.Error())
 			} else {
@@ -90,7 +145,7 @@ func (s *Server) createComment() http.HandlerFunc {
 	}
 }
 
-func (s *Server) getComments(filterMode FilterMode) http.HandlerFunc {
+func (s *Server) getComments(redact bool, filterMode FilterMode) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "getComments")
 		ctx := conduit.WithLogger(r.Context(), logger)
@@ -148,13 +203,19 @@ func (s *Server) getComments(filterMode FilterMode) http.HandlerFunc {
 			return
 		}
 
+		if redact {
+			for i := range comments {
+				comments[i].AuthorEmail = ""
+				comments[i].SourceAddress = ""
+			}
+		}
 		writeJSON(ctx, w, http.StatusOK, comments)
 	}
 }
 
 func (s *Server) upsertComment() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "upsertComment")
+		logger := s.Logger.With("request_id", uuid.NewString(), "handler", "upsertComment", "source_ip", r.RemoteAddr)
 		ctx := conduit.WithLogger(r.Context(), logger)
 
 		if r.Method != http.MethodPost {

@@ -28,6 +28,7 @@ type Comment struct {
 	SiteID      string    `json:"siteID"`
 	PostID      string    `json:"postID"`
 	Timestamp   Timestamp `json:"timestamp"`
+	SourceAddress string  `json:"sourceAddress"`
 	Author      string    `json:"author"`
 	AuthorEmail string    `json:"authorEmail"`
 	CommentBody string    `json:"commentBody"`
@@ -40,6 +41,7 @@ type NewComment struct {
 	Author      string `json:"author"`
 	AuthorEmail string `json:"authorEmail"`
 	CommentBody string `json:"commentBody"`
+	TurnstileToken string `json:"turnstileToken"`
 }
 
 type CommentFilter struct {

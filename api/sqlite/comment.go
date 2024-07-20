@@ -42,7 +42,7 @@ func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment)
 	logger := conduit.GetLogger(ctx)
 
 	upsert, err := cs.DB.Prepare(`
-		INSERT OR REPLACE INTO comments (comment_id, site_id, post_id, timestamp, author, author_email, comment, is_active)
+		INSERT OR REPLACE INTO comments (comment_id, site_id, post_id, timestamp, source_address, author, author_email, comment, is_active)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		`)
 	if err != nil {
@@ -51,7 +51,7 @@ func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment)
 	}
 	defer upsert.Close()
 
-	_, err = upsert.Exec(c.CommentID, c.SiteID, c.PostID, time.Time(c.Timestamp), c.Author, c.AuthorEmail, c.CommentBody, c.IsActive)
+	_, err = upsert.Exec(c.CommentID, c.SiteID, c.PostID, time.Time(c.Timestamp), c.SourceAddress, c.Author, c.AuthorEmail, c.CommentBody, c.IsActive)
 	if err != nil {
 		logger.Error("exec failed", "error", err)
 		return err
@@ -97,7 +97,7 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 	for rows.Next() {
 		var c conduit.Comment
 		var t time.Time
-		err = rows.Scan(&c.CommentID, &c.SiteID, &c.PostID, &t, &c.Author, &c.AuthorEmail, &c.CommentBody, &c.IsActive)
+		err = rows.Scan(&c.CommentID, &c.SiteID, &c.PostID, &c.SourceAddress, &t, &c.Author, &c.AuthorEmail, &c.CommentBody, &c.IsActive)
 		if err != nil {
 			logger.Error("scan failed", "error", err)
 			return empty, err

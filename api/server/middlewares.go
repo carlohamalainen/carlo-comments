@@ -18,6 +18,7 @@ func Logger(logger *slog.Logger) func(h http.Handler) http.Handler {
 				slog.String("url", r.URL.String()),
 				slog.String("proto", r.Proto),
 				slog.String("remote_addr", r.RemoteAddr),
+				slog.String("client_ip", getClientIP(r)),
 			)
 
 			logger.Info("Incoming request")

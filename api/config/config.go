@@ -18,6 +18,10 @@ type Config struct {
 	S3BucketName string
 	SESIdentity string
 
+	// CloudFlare
+	CfSiteKey string
+	CfSecretKey string
+
 	Port               string
 	HmacSecret         string
 	CommentHost        string
@@ -154,6 +158,18 @@ func GetConfig() (*Config, error) {
 	cfg.LimiterBurst = int(num)
 
 	cfg.MaxBodySize = 4*8192
+
+	cfSiteKey, ok := os.LookupEnv("CF_SITE_KEY")
+	if !ok {
+		return nil, fmt.Errorf("CF_SITE_KEY is not set")
+	}
+	cfg.CfSiteKey = cfSiteKey
+
+	cfSecretKey, ok := os.LookupEnv("CF_SECRET_KEY")
+	if !ok {
+		return nil, fmt.Errorf("CF_SECRET_KEY is not set")
+	}
+	cfg.CfSecretKey = cfSecretKey
 
 	return cfg, nil
 }

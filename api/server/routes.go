@@ -43,7 +43,7 @@ func (s *Server) routes() {
 
 		// Need OPTIONS here otherwise the cors handler won't match anything!
 		noAuth.Handle("/comments/new", s.createComment()).Methods("POST", "OPTIONS")
-		noAuth.Handle("/comments", s.getComments(ActiveOnly)).Methods("POST", "OPTIONS")
+		noAuth.Handle("/comments", s.getComments(true, ActiveOnly)).Methods("POST", "OPTIONS")
 	}
 
 	admin := v1.PathPrefix("/admin").Subrouter()
@@ -55,6 +55,6 @@ func (s *Server) routes() {
 	comments.Use(s.authenticate())
 	{
 		comments.Handle("/new", s.upsertComment()).Methods("POST")
-		comments.Handle("", s.getComments(FreeRange)).Methods("POST")
+		comments.Handle("", s.getComments(false, FreeRange)).Methods("POST")
 	}
 }
