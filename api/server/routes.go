@@ -14,7 +14,7 @@ const (
 	FreeRange                    // query can be anything at all (only for admin interface)
 )
 
-type printfLogger struct{
+type printfLogger struct {
 	slog *slog.Logger
 }
 
@@ -25,11 +25,11 @@ func (l *printfLogger) Printf(format string, args ...interface{}) {
 func (s *Server) routes() {
 	cors := cors.New(cors.Options{
 		AllowCredentials: true,
-		AllowedOrigins: s.Config.CorsAllowedOrigins,
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   s.Config.CorsAllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		// AllowedHeaders: []string{"Content-Type", "Authorization"},
 		AllowedHeaders: []string{"*"},
-		Logger: &printfLogger{slog:s.Logger},
+		Logger:         &printfLogger{slog: s.Logger},
 	})
 	s.router.Use(cors.Handler)
 	s.router.Use(s.limitMiddleware)
@@ -48,13 +48,13 @@ func (s *Server) routes() {
 
 	admin := v1.PathPrefix("/admin").Subrouter()
 	{
-		admin.Handle("/login", s.loginUser()).Methods("POST")
+		admin.Handle("/login", s.loginUser()).Methods("POST", "OPTIONS")
 	}
 
 	comments := admin.PathPrefix("/comments").Subrouter()
 	comments.Use(s.authenticate())
 	{
-		comments.Handle("/new", s.upsertComment()).Methods("POST")
-		comments.Handle("", s.getComments(false, FreeRange)).Methods("POST")
+		comments.Handle("/new", s.upsertComment()).Methods("POST", "OPTIONS")
+		comments.Handle("", s.getComments(false, FreeRange)).Methods("POST", "OPTIONS")
 	}
 }

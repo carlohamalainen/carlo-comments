@@ -24,23 +24,23 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 }
 
 type Comment struct {
-	CommentID   string    `json:"commentID"`
-	SiteID      string    `json:"siteID"`
-	PostID      string    `json:"postID"`
-	Timestamp   Timestamp `json:"timestamp"`
-	SourceAddress string  `json:"sourceAddress"`
-	Author      string    `json:"author"`
-	AuthorEmail string    `json:"authorEmail"`
-	CommentBody string    `json:"commentBody"`
-	IsActive    bool      `json:"isActive"`
+	CommentID     string    `json:"commentID"`
+	SiteID        string    `json:"siteID"`
+	PostID        string    `json:"postID"`
+	Timestamp     Timestamp `json:"timestamp"`
+	SourceAddress string    `json:"sourceAddress"`
+	Author        string    `json:"author"`
+	AuthorEmail   string    `json:"authorEmail"`
+	CommentBody   string    `json:"commentBody"`
+	IsActive      bool      `json:"isActive"`
 }
 
 type NewComment struct {
-	SiteID      string `json:"siteID"`
-	PostID      string `json:"postID"`
-	Author      string `json:"author"`
-	AuthorEmail string `json:"authorEmail"`
-	CommentBody string `json:"commentBody"`
+	SiteID         string `json:"siteID"`
+	PostID         string `json:"postID"`
+	Author         string `json:"author"`
+	AuthorEmail    string `json:"authorEmail"`
+	CommentBody    string `json:"commentBody"`
 	TurnstileToken string `json:"turnstileToken"`
 }
 

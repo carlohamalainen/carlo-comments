@@ -1,8 +1,8 @@
 package server
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"

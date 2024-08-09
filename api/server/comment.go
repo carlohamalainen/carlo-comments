@@ -12,25 +12,25 @@ import (
 )
 
 func getClientIP(r *http.Request) string {
-    ip := r.Header.Get("X-Real-IP")
-    if ip != "" {
-        return ip
-    }
+	ip := r.Header.Get("X-Real-IP")
+	if ip != "" {
+		return ip
+	}
 
-    ips := r.Header.Get("X-Forwarded-For")
-    if ips != "" {
-        ipList := strings.Split(ips, ",")
-        if len(ipList) > 0 {
-            return strings.TrimSpace(ipList[0])
-        }
-    }
+	ips := r.Header.Get("X-Forwarded-For")
+	if ips != "" {
+		ipList := strings.Split(ips, ",")
+		if len(ipList) > 0 {
+			return strings.TrimSpace(ipList[0])
+		}
+	}
 
-    return r.RemoteAddr
+	return r.RemoteAddr
 }
 
 func logRequestHeaders(logger *slog.Logger, r *http.Request) {
-    headers := make(map[string]string)
-    for name, values := range r.Header {
+	headers := make(map[string]string)
+	for name, values := range r.Header {
 		switch len(values) {
 		case 0:
 			continue
@@ -39,13 +39,13 @@ func logRequestHeaders(logger *slog.Logger, r *http.Request) {
 		default:
 			headers[name] = fmt.Sprintf("%v", values)
 		}
-    }
+	}
 
-    logger.Info("Request headers",
-        "method", r.Method,
-        "url", r.URL.String(),
-        "headers", headers,
-    )
+	logger.Info("Request headers",
+		"method", r.Method,
+		"url", r.URL.String(),
+		"headers", headers,
+	)
 }
 
 func (s *Server) createComment() http.HandlerFunc {
@@ -248,14 +248,15 @@ func (s *Server) upsertComment() http.HandlerFunc {
 		}
 
 		comment.Author = Sanitize(comment.Author)
+		comment.AuthorEmail = Sanitize(comment.AuthorEmail)
 		comment.CommentBody = Sanitize(comment.CommentBody)
 
-		if !conduit.IsValidEmail(comment.AuthorEmail) {
-			// TODO add to conduit/errors.go
-			logger.Error("invalid author email", "email", comment.AuthorEmail)
-			http.Error(w, "bad email", http.StatusBadRequest)
-			return
-		}
+		// if !conduit.IsValidEmail(comment.AuthorEmail) {
+		// 	// TODO add to conduit/errors.go
+		// 	logger.Error("invalid author email", "email", comment.AuthorEmail)
+		// 	http.Error(w, "bad email", http.StatusBadRequest)
+		// 	return
+		// }
 
 		err := s.commentService.UpsertComment(ctx, &comment)
 		if err != nil {
@@ -265,6 +266,6 @@ func (s *Server) upsertComment() http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		writeJSON(ctx, w, http.StatusCreated, comment)
 	}
 }

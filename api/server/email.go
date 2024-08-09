@@ -5,9 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 
-	"github.com/carlohamalainen/carlo-comments/config"
 	"github.com/carlohamalainen/carlo-comments/conduit"
-
+	"github.com/carlohamalainen/carlo-comments/config"
 )
 
 func Notify(config *config.Config, comment *conduit.Comment) error {
@@ -36,7 +35,7 @@ func Notify(config *config.Config, comment *conduit.Comment) error {
 				Data: aws.String("New comment " + comment.CommentID + " " + comment.PostID),
 			},
 		},
-		Source: aws.String(config.AdminUser),
+		Source:    aws.String(config.AdminUser),
 		SourceArn: aws.String(config.SESIdentity),
 	}
 

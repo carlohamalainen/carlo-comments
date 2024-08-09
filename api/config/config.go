@@ -16,10 +16,10 @@ type Config struct {
 	// S3 config
 	S3Region     string
 	S3BucketName string
-	SESIdentity string
+	SESIdentity  string
 
 	// CloudFlare
-	CfSiteKey string
+	CfSiteKey   string
 	CfSecretKey string
 
 	Port               string
@@ -157,7 +157,7 @@ func GetConfig() (*Config, error) {
 	}
 	cfg.LimiterBurst = int(num)
 
-	cfg.MaxBodySize = 4*8192
+	cfg.MaxBodySize = 4 * 8192
 
 	cfSiteKey, ok := os.LookupEnv("CF_SITE_KEY")
 	if !ok {

@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -94,6 +96,11 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 		prefix += *commentFilter.PostID
 	}
 
+	// Messy. When we search with just a SiteID we need to add a trailing slash.
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+
 	onlyActive := commentFilter.IsActive != nil && *commentFilter.IsActive
 
 	resp, err := cs.ListObjects(&s3.ListObjectsInput{
@@ -120,7 +127,9 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 
 		var comment conduit.Comment
 		err = json.NewDecoder(getResp.Body).Decode(&comment)
-		if err != nil {
+		if err != nil && err == io.EOF {
+			continue
+		} else if err != nil {
 			logger.Error("failed json decode", "error", err, "key", *object.Key)
 			return empty, err
 		}

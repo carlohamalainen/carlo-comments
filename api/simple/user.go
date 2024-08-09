@@ -34,13 +34,13 @@ func (us *UserService) Authenticate(ctx context.Context, adminUserEmail, adminUs
 	logger := conduit.GetLogger(ctx)
 
 	if adminUserEmail != email {
-		logger.Info("invalid credentials", "email", email)
+		logger.Info("invalid credentials, email mismatch", "email", email)
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(adminUserPassword), []byte(password))
 	if err != nil {
-		logger.Info("invalid credentials", "email", email)
+		logger.Info("invalid credentials", "email", email, "error", err.Error())
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
