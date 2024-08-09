@@ -19,7 +19,7 @@ spec:
       - name: regcred
       containers:
       - name: carlo-comments
-        image: registry.digitalocean.com/carlo-containers/carlo-comments:v14
+        image: registry.digitalocean.com/carlo-containers/carlo-comments:v20
         ports:
         - containerPort: 3000
 

@@ -6,19 +6,24 @@ After=network.target
 ExecStart=/home/app/carlo-comments-linux-amd64
 User=app
 Group=app
-Environment=SQLITE_PATH=/home/app/comments.db
 Environment=LOG_DIRECTORY=/home/app/logs
-Environment=PORT={{ lookup('env', 'PORT') }}
-Environment=HMAC_SECRET={{ lookup('env', 'HMAC_SECRET') }}
-Environment=COMMENT_HOST={{ lookup('env', 'COMMENT_HOST') }}
-Environment=ADMIN_USER={{ lookup('env', 'ADMIN_USER') }}
-Environment=ADMIN_PASS={{ lookup('env', 'ADMIN_PASS') }}
-Environment=APP_NAME={{ lookup('env', 'APP_NAME') }}
 Environment=CORS_ALLOWED_ORIGINS="https://carlo-hamalainen.net"
 Environment=HANDLER_TIMEOUT="5s"
 Environment=LIMITER_RATE=100
 Environment=LIMITER_BURST=50
-
+Environment=PORT={{ lookup('env', 'PORT')}}
+Environment=APP_NAME={{ lookup('env', 'APP_NAME')}}
+Environment=COMMENT_HOST={{ lookup('env', 'COMMENT_HOST')}}
+Environment=AWS_ACCESS_KEY_ID={{ lookup('env', 'AWS_ACCESS_KEY_ID')}}
+Environment=AWS_SECRET_ACCESS_KEY={{ lookup('env', 'AWS_SECRET_ACCESS_KEY')}}
+Environment=HMAC_SECRET={{ lookup('env', 'HMAC_SECRET')}}
+Environment=ADMIN_USER={{ lookup('env', 'ADMIN_USER')}}
+Environment=ADMIN_PASS={{ lookup('env', 'ADMIN_PASS')}}
+Environment=S3_REGION={{ lookup('env', 'S3_REGION')}}
+Environment=S3_BUCKET={{ lookup('env', 'S3_BUCKET')}}
+Environment=SES_IDENTITY={{ lookup('env', 'SES_IDENTITY')}}
+Environment=CF_SITE_KEY={{ lookup('env', 'CF_SITE_KEY')}}
+Environment=CF_SECRET_KEY={{ lookup('env', 'CF_SECRET_KEY')}}
 Restart=always
 RestartSec=10
 
