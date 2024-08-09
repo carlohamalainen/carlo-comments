@@ -24,13 +24,11 @@ port turnstileToken : (String -> msg) -> Sub msg
 
 urlNewComment : String
 urlNewComment =
-    "https://api.carlo-hamalainen.net/v1/comments/new"
-
+    "https://api.geckobob.net/v1/comments/new"
 
 urlComments : String
 urlComments =
-    "https://api.carlo-hamalainen.net/v1/comments"
-
+    "https://api.geckobob.net/v1/comments"
 
 theSiteId : String
 theSiteId =
