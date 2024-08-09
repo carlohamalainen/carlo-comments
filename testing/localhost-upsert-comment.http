@@ -1,15 +1,15 @@
-POST http://localhost:8080/update HTTP/1.1
+POST https://api.carlo-hamalainen.net/v1/admin/comments/new HTTP/1.1
 content-type: application/json
 Authorization: Bearer {{$processEnv ADMIN_TOKEN}}
 
 {
-    "commentID": "12345",
-    "siteID": "nadiah.org",
-    "postID": "/2006/05/04/invasibility-and-food-web-structure-in-assembly-algorithms",
-    "author": "bob",
-    "authorEmail": "nope@example.com",
-    "commentBody": "hahaah this is a comment lols",
-    "timestamp": "2023-06-08T12:34:56.789Z",
-    "isActive": true
+  "commentID": "a9a79552-2413-454c-8262-1681d47e84f1",
+  "siteID": "carlo-hamalainen.net",
+  "postID": "/2024/05/30/2024-05-30-kubernetes-tls-speedrun",
+  "timestamp": 1721532251424,
+  "sourceAddress": "116.86.94.70",
+  "author": "blah 4",
+  "authorEmail": "nope@example.com",
+  "commentBody": "haha\n\nyou lols\n\nthis is a comment\n\n",
+  "isActive": false
 }
-

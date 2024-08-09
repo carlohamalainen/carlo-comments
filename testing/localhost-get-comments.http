@@ -1,9 +1,8 @@
-GET http://localhost:8080/v1/comments HTTP/1.1
+GET http://localhost:8000 HTTP/1.1
 content-type: application/json
 
 {
-    "siteID": "nadiah.org",
-    "postID": "/2006/05/04/invasibility-and-food-web-structure-in-assembly-algorithms",
-    "isActive": false
+    "siteID": "carlo-hamalainen.net",
+    "postID": "/2007/12/11/installing-minion-pro-fonts",
+    "isActive": true
 }
-
