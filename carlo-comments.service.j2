@@ -6,8 +6,8 @@ After=network.target
 ExecStart=/home/app/carlo-comments-linux-amd64
 User=app
 Group=app
-Environment=LOG_DIRECTORY=/home/app/logs
-Environment=CORS_ALLOWED_ORIGINS="https://carlo-hamalainen.net"
+Environment=LOG_DIRECTORY={{ lookup('env', 'LOG_DIRECTORY_DROPLET')}}
+Environment=CORS_ALLOWED_ORIGINS={{ lookup('env', 'CORS_ALLOWED_ORIGINS_DROPLET')}}
 Environment=HANDLER_TIMEOUT="5s"
 Environment=LIMITER_RATE=100
 Environment=LIMITER_BURST=50
