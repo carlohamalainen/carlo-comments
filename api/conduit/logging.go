@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/carlohamalainen/carlo-comments/config"
@@ -111,7 +110,5 @@ func (h *dailyFileHandler) Flush() {
 }
 
 func (h *dailyFileHandler) getLogFileName() string {
-	currentTime := time.Now()
-	logFileName := h.logPrefix + "-" + currentTime.Format("2006-01-02") + ".log"
-	return filepath.Join(h.logDir, logFileName)
+	return h.logPrefix + "-" + time.Now().Format("2006-01-02") + ".log"
 }
