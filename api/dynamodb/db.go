@@ -18,9 +18,7 @@ type DB struct {
 func Open(ctx context.Context, cfg config.Config) (*DB, error) {
 	logger := conduit.GetLogger(ctx)
 
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(cfg.S3Region),
-	})
+	sess, err := session.NewSession()
 	if err != nil {
 		logger.Error("failed to create AWS session", "error", err)
 		return nil, err
@@ -30,5 +28,7 @@ func Open(ctx context.Context, cfg config.Config) (*DB, error) {
 		logger.Error("authentication failed", "error", err)
 	}
 
-	return &DB{dynamodb.New(sess)}, nil
+	svc := dynamodb.New(sess, aws.NewConfig().WithRegion(cfg.DynamoDBRegion))
+
+	return &DB{svc}, nil
 }
