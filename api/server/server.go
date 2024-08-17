@@ -9,7 +9,7 @@ import (
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/carlohamalainen/carlo-comments/config"
-	"github.com/carlohamalainen/carlo-comments/s3"
+	"github.com/carlohamalainen/carlo-comments/dynamodb"
 	"github.com/carlohamalainen/carlo-comments/simple"
 
 	"github.com/google/uuid"
@@ -97,7 +97,7 @@ func (s *Server) SetKnown(ctx context.Context, site_id string, post_id string) {
 	s.knownPosts[site_id][post_id] = true
 }
 
-func NewServer(ctx context.Context, db *s3.DB, cfg config.Config) *Server {
+func NewServer(ctx context.Context, db *dynamodb.DB, cfg config.Config) *Server {
 	logger := conduit.GetLogger(ctx)
 
 	s := Server{
@@ -137,7 +137,7 @@ func NewServer(ctx context.Context, db *s3.DB, cfg config.Config) *Server {
 	}
 
 	s.UserService = simple.NewUserService(s.Config.HmacSecret)
-	s.commentService = s3.NewCommentService(db, cfg.S3Region, cfg.S3BucketName)
+	s.commentService = dynamodb.NewCommentService(db, cfg.DynamoDBRegion, cfg.DynamoDBTableName)
 
 	// Maybe State should be a conduit as well, with an in-memory thing...
 	s.InitState()
@@ -150,9 +150,6 @@ func NewServer(ctx context.Context, db *s3.DB, cfg config.Config) *Server {
 func (s *Server) Run(ctx context.Context, port string) error {
 	logger := conduit.GetLogger(ctx)
 
-	// if !strings.HasPrefix(port, ":") {
-	// 	port = ":" + port
-	// }
 	s.server.Addr = port
 
 	logger.Info("starting server", "addr", s.server.Addr)

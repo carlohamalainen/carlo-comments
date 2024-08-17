@@ -6,7 +6,7 @@ import (
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
 	"github.com/carlohamalainen/carlo-comments/config"
-	"github.com/carlohamalainen/carlo-comments/s3"
+	"github.com/carlohamalainen/carlo-comments/dynamodb"
 	"github.com/carlohamalainen/carlo-comments/server"
 )
 
@@ -21,7 +21,7 @@ func main() {
 
 	ctx := conduit.WithLogger(context.Background(), logger)
 
-	db, err := s3.Open(ctx, *cfg)
+	db, err := dynamodb.Open(ctx, *cfg)
 	if err != nil {
 		logger.Error("failed to open database", "error", err)
 		panic(err)

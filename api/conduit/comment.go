@@ -10,7 +10,7 @@ import (
 type Timestamp time.Time
 
 func (t Timestamp) MarshalJSON() ([]byte, error) {
-	milliseconds := time.Time(t).UnixNano() / int64(time.Millisecond)
+	milliseconds := time.Time(t).UnixMilli()
 	return []byte(strconv.FormatInt(milliseconds, 10)), nil
 }
 
@@ -19,7 +19,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = Timestamp(time.Unix(0, milliseconds*int64(time.Millisecond)))
+	*t = Timestamp(time.UnixMilli(milliseconds))
 	return nil
 }
 

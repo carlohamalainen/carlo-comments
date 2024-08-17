@@ -13,10 +13,15 @@ type Config struct {
 	// sqlite config
 	SqlitePath string
 
+	SESIdentity  string
+
 	// S3 config
 	S3Region     string
 	S3BucketName string
-	SESIdentity  string
+
+	// DynamoDB config
+	DynamoDBRegion     string
+	DynamoDBTableName string
 
 	// CloudFlare
 	CfSiteKey   string
@@ -40,32 +45,51 @@ type Config struct {
 	LimiterBurst int
 }
 
+func setDynamoDBConfig(config *Config) int {
+	dynamoDBTableName, ok0 := os.LookupEnv("DYNAMODB_TABLE_NAME")
+	dynamoDBRegion, ok1 := os.LookupEnv("DYNAMODB_REGION")
+
+	if ok0 && ok1 {
+		config.DynamoDBTableName = dynamoDBTableName
+		config.DynamoDBRegion = dynamoDBRegion
+		return 1
+	}
+
+	return 0
+}
+
+func setSQLiteConfig(config *Config) int {
+	sqlitePath, ok := os.LookupEnv("SQLITE_PATH")
+	if ok {
+		config.SqlitePath = sqlitePath
+		return 1
+	}
+	return 0
+}
+
+func setS3Config(config *Config) int {
+	s3BucketName, ok0 := os.LookupEnv("S3_BUCKET")
+	s3Region, ok1 := os.LookupEnv("S3_REGION")
+	if ok0 && ok1 {
+		config.S3BucketName = s3BucketName
+		config.S3Region = s3Region
+		return 1
+	}
+
+	return 0
+}
+
+
 func GetConfig() (*Config, error) {
 	cfg := &Config{MaxNrComments: 100}
 
-	sqlitePath, ok := os.LookupEnv("SQLITE_PATH")
-	if ok {
-		cfg.SqlitePath = sqlitePath
-	}
+	dynamodb := setDynamoDBConfig(cfg)
+	s3 := setS3Config(cfg)
+	sqlite := setSQLiteConfig(cfg)
 
-	s3BucketName, ok := os.LookupEnv("S3_BUCKET")
-	if ok {
-		cfg.S3BucketName = s3BucketName
-	}
-	s3Region, ok := os.LookupEnv("S3_REGION")
-	if ok {
-		cfg.S3Region = s3Region
-	}
+	if dynamodb + s3 + sqlite != 1 {
+		return nil, fmt.Errorf("need precisely one backend to be configured")
 
-	storageOK := false
-	if cfg.SqlitePath != "" && cfg.S3BucketName == "" && cfg.S3Region == "" {
-		storageOK = true
-	}
-	if cfg.SqlitePath == "" && cfg.S3BucketName != "" && cfg.S3Region != "" {
-		storageOK = true
-	}
-	if !storageOK {
-		return nil, fmt.Errorf("need sqlite or S3 environment")
 	}
 
 	sesIdentity, ok := os.LookupEnv("SES_IDENTITY")

@@ -30,10 +30,10 @@ func (cs *CommentService) NrComments(ctx context.Context, filter conduit.Comment
 	var prefix = ""
 
 	if filter.SiteID == nil {
-		return 0, fmt.Errorf("need SiteID for count query")
+		return -1, fmt.Errorf("need SiteID for count query")
 	}
 	if filter.PostID == nil {
-		return 0, fmt.Errorf("need PostID for count query")
+		return -1, fmt.Errorf("need PostID for count query")
 	}
 
 	prefix += *filter.SiteID
