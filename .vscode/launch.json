@@ -11,7 +11,7 @@
             // "program": "${workspaceFolder}/api/cmd/s3/main.go",
             "env": {
                 "PORT":"${env:PORT}",
-                "SQLITE_PATH":"${env:SQLITE_PATH}",
+                // "SQLITE_PATH":"${env:SQLITE_PATH}",
                 "HMAC_SECRET":"${env:HMAC_SECRET}",
                 "COMMENT_HOST":"${env:COMMENT_HOST}",
                 "ADMIN_USER":"${env:ADMIN_USER}",
@@ -21,6 +21,9 @@
                 "HANDLER_TIMEOUT":"1000s",
                 "LIMITER_RATE":"${env:LIMITER_RATE}",
                 "LIMITER_BURST":"${env:LIMITER_BURST}",
+                "DYNAMODB_TABLE_NAME":"${env:DYNAMODB_TABLE_NAME}",
+                "DYNAMODB_REGION":"${env:DYNAMODB_REGION}",
+                "SES_IDENTITY":"${env:SES_IDENTITY}"
             }
         }
     ]

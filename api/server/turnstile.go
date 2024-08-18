@@ -18,7 +18,6 @@ type TurnstileResponse struct {
 	ErrorCodes  []string  `json:"error-codes"`
 }
 
-// FIXME timeout?
 func VerifyTurnstileToken(token, secret string) (*TurnstileResponse, error) {
 	data := url.Values{}
 	data.Set("secret", secret)

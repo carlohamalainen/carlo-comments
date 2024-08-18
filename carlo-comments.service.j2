@@ -19,8 +19,10 @@ Environment=AWS_SECRET_ACCESS_KEY={{ lookup('env', 'AWS_SECRET_ACCESS_KEY')}}
 Environment=HMAC_SECRET={{ lookup('env', 'HMAC_SECRET')}}
 Environment=ADMIN_USER={{ lookup('env', 'ADMIN_USER')}}
 Environment=ADMIN_PASS={{ lookup('env', 'ADMIN_PASS')}}
-Environment=S3_REGION={{ lookup('env', 'S3_REGION')}}
-Environment=S3_BUCKET={{ lookup('env', 'S3_BUCKET')}}
+# Environment=S3_REGION={{ lookup('env', 'S3_REGION')}}
+# Environment=S3_BUCKET={{ lookup('env', 'S3_BUCKET')}}
+Environment=DYNAMODB_TABLE_NAME={{ lookup('env', 'DYNAMODB_TABLE_NAME')}}
+Environment=DYNAMODB_REGION={{ lookup('env', 'DYNAMODB_REGION')}}
 Environment=SES_IDENTITY={{ lookup('env', 'SES_IDENTITY')}}
 Environment=CF_SITE_KEY={{ lookup('env', 'CF_SITE_KEY')}}
 Environment=CF_SECRET_KEY={{ lookup('env', 'CF_SECRET_KEY')}}

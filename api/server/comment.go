@@ -70,21 +70,23 @@ func (s *Server) createComment() http.HandlerFunc {
 			return
 		}
 
-		if newComment.TurnstileToken == "" {
-			logger.Error("turnstile token empty")
-			http.Error(w, "Internal server error", http.StatusBadRequest)
-			return
-		}
+		if true {
+			if newComment.TurnstileToken == "" {
+				logger.Error("turnstile token empty")
+				http.Error(w, "Internal server error", http.StatusBadRequest)
+				return
+			}
 
-		if _, err := VerifyTurnstileToken(newComment.TurnstileToken, s.Config.CfSecretKey); err != nil {
-			logger.Error("turnstile token rejected", "error", err, "turnstile_token", newComment.TurnstileToken)
-			http.Error(w, "Internal server error", http.StatusBadRequest)
-			return
+			if _, err := VerifyTurnstileToken(newComment.TurnstileToken, s.Config.CfSecretKey); err != nil {
+				logger.Error("turnstile token rejected", "error", err.Error(), "turnstile_token", newComment.TurnstileToken)
+				http.Error(w, "Internal server error", http.StatusBadRequest)
+				return
+			}
 		}
 
 		nr, err := s.commentService.NrComments(ctx, conduit.CommentFilter{SiteID: &newComment.SiteID, PostID: &newComment.PostID})
 		if err != nil {
-			logger.Error("failed to count nr comments on post", "error", err)
+			logger.Error("failed to count nr comments on post", "error", err.Error())
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -120,9 +122,11 @@ func (s *Server) createComment() http.HandlerFunc {
 		comment.Author = Sanitize(newComment.Author)
 		comment.CommentBody = Sanitize(newComment.CommentBody)
 
-		if conduit.IsValidEmail(newComment.AuthorEmail) {
-			comment.AuthorEmail = newComment.AuthorEmail
-		}
+		// I guess I don't care about validating the author's.
+		// if conduit.IsValidEmail(newComment.AuthorEmail) {
+		// 	comment.AuthorEmail = newComment.AuthorEmail
+		// }
+		comment.AuthorEmail = newComment.AuthorEmail
 
 		err = s.commentService.UpsertComment(ctx, &comment)
 		if err != nil {
@@ -132,7 +136,7 @@ func (s *Server) createComment() http.HandlerFunc {
 		}
 
 		go func() {
-			err := Notify(&s.Config, &comment)
+			err := Notify(logger, &s.Config, &comment)
 			if err != nil {
 				logger.Error("failed to send notification email", "error", err.Error())
 			} else {

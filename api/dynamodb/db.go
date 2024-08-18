@@ -3,32 +3,27 @@ package dynamodb
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	"github.com/carlohamalainen/carlo-comments/conduit"
-	"github.com/carlohamalainen/carlo-comments/config"
+	carloconfig "github.com/carlohamalainen/carlo-comments/config"
 )
 
 type DB struct {
-	*dynamodb.DynamoDB
+	*dynamodb.Client
 }
 
-func Open(ctx context.Context, cfg config.Config) (*DB, error) {
+func Open(ctx context.Context, carloconfig carloconfig.Config) (*DB, error) {
 	logger := conduit.GetLogger(ctx)
 
-	sess, err := session.NewSession()
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(carloconfig.DynamoDBRegion))
 	if err != nil {
-		logger.Error("failed to create AWS session", "error", err)
+		logger.Error("unable to load SDK config", "error", err.Error())
 		return nil, err
 	}
 
-	if _, err := sess.Config.Credentials.Get(); err != nil {
-		logger.Error("authentication failed", "error", err)
-	}
+	client := dynamodb.NewFromConfig(cfg)
 
-	svc := dynamodb.New(sess, aws.NewConfig().WithRegion(cfg.DynamoDBRegion))
-
-	return &DB{svc}, nil
+	return &DB{client}, nil
 }

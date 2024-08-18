@@ -13,14 +13,14 @@ type Config struct {
 	// sqlite config
 	SqlitePath string
 
-	SESIdentity  string
+	SESIdentity string
 
 	// S3 config
 	S3Region     string
 	S3BucketName string
 
 	// DynamoDB config
-	DynamoDBRegion     string
+	DynamoDBRegion    string
 	DynamoDBTableName string
 
 	// CloudFlare
@@ -79,7 +79,6 @@ func setS3Config(config *Config) int {
 	return 0
 }
 
-
 func GetConfig() (*Config, error) {
 	cfg := &Config{MaxNrComments: 100}
 
@@ -87,7 +86,7 @@ func GetConfig() (*Config, error) {
 	s3 := setS3Config(cfg)
 	sqlite := setSQLiteConfig(cfg)
 
-	if dynamodb + s3 + sqlite != 1 {
+	if dynamodb+s3+sqlite != 1 {
 		return nil, fmt.Errorf("need precisely one backend to be configured")
 
 	}
