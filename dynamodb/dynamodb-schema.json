@@ -1,15 +1,5 @@
 {
   "TableName": "BlogComments",
-  "KeySchema": [
-    {
-      "AttributeName": "SiteID",
-      "KeyType": "HASH"
-    },
-    {
-      "AttributeName": "CommentID",
-      "KeyType": "RANGE"
-    }
-  ],
   "AttributeDefinitions": [
     {
       "AttributeName": "SiteID",
@@ -24,16 +14,18 @@
       "AttributeType": "S"
     },
     {
-      "AttributeName": "Timestamp",
-      "AttributeType": "N"
-    },
-    {
-      "AttributeName": "Author",
-      "AttributeType": "S"
-    },
-    {
       "AttributeName": "IsActive",
       "AttributeType": "N"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "SiteID",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "CommentID",
+      "KeyType": "RANGE"
     }
   ],
   "GlobalSecondaryIndexes": [
@@ -41,39 +33,23 @@
       "IndexName": "PostIndex",
       "KeySchema": [
         {
-          "AttributeName": "PostID",
-          "KeyType": "HASH"
-        },
-        {
-          "AttributeName": "Timestamp",
-          "KeyType": "RANGE"
-        }
-      ],
-      "Projection": {
-        "ProjectionType": "ALL"
-      }
-    },
-    {
-      "IndexName": "AuthorIndex",
-      "KeySchema": [
-        {
-          "AttributeName": "Author",
-          "KeyType": "HASH"
-        },
-        {
-          "AttributeName": "Timestamp",
-          "KeyType": "RANGE"
-        }
-      ],
-      "Projection": {
-        "ProjectionType": "ALL"
-      }
-    },
-    {
-      "IndexName": "IsActiveIndex",
-      "KeySchema": [
-        {
           "AttributeName": "SiteID",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "PostID",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    },
+    {
+      "IndexName": "ActiveIndex",
+      "KeySchema": [
+        {
+          "AttributeName": "PostID",
           "KeyType": "HASH"
         },
         {
@@ -86,5 +62,17 @@
       }
     }
   ],
-  "BillingMode": "PAY_PER_REQUEST"
+  "BillingMode": "PAY_PER_REQUEST",
+  "StreamSpecification": {
+    "StreamEnabled": false
+  },
+  "SSESpecification": {
+    "Enabled": false
+  },
+  "Tags": [
+    {
+      "Key": "Environment",
+      "Value": "Production"
+    }
+  ]
 }
