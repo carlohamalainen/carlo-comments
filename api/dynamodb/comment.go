@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"time"
 
@@ -73,36 +74,26 @@ func dynamoItemToComment(d DynamoComment) conduit.Comment {
 
 }
 
-// FIXME this is annoying because we lose line numbers; change to
-// a function that gets extra log attributes and use a normal
-// logger.Error at the site of the error.
-func logDynamoDBError(ctx context.Context, err error, operation string) {
-	logger := conduit.GetLogger(ctx)
+func expandAWSError(err error, operation string) (string, []any) {
+	msg := ""
+	attrs := make([]any, 0)
+
 	var ae smithy.APIError
 	if errors.As(err, &ae) {
-		logger.ErrorContext(ctx, "DynamoDB operation failed",
-			"operation", operation,
-			"error_code", ae.ErrorCode(),
-			"error_message", ae.ErrorMessage(),
-			"error_fault", ae.ErrorFault().String(),
-		)
-		return
+		attrs = append(attrs, slog.String("operation", operation))
+		attrs = append(attrs, slog.String("error_code", ae.ErrorCode()))
+		attrs = append(attrs, slog.String("error_message", ae.ErrorMessage()))
+		attrs = append(attrs, slog.String("error_fault", ae.ErrorFault().String()))
+
+		msg = "DynamoDB operation failed"
+	} else {
+		attrs = append(attrs, slog.String("operation", operation))
+		attrs = append(attrs, slog.String("error_type", reflect.TypeOf(err).String()))
+		attrs = append(attrs, slog.String("error", err.Error()))
+		msg = "Unknown DynamoDB error"
 	}
 
-	logger.ErrorContext(ctx, "Unknown DynamoDB error",
-		"operation", operation,
-		"error_type", reflect.TypeOf(err).String(),
-		"error", err.Error(),
-	)
-
-	var awsErr smithy.APIError
-	if errors.As(err, &awsErr) {
-		logger.ErrorContext(ctx, "Additional AWS error details",
-			"error_code", awsErr.ErrorCode(),
-			"error_message", awsErr.ErrorMessage(),
-			"error_fault", awsErr.ErrorFault().String(),
-		)
-	}
+	return msg, attrs
 }
 
 func NewCommentService(db *DB, dynamodbRegion string, dynamoDBTableName string) *CommentService {
@@ -110,6 +101,8 @@ func NewCommentService(db *DB, dynamodbRegion string, dynamoDBTableName string) 
 }
 
 func (cs *CommentService) NrComments(ctx context.Context, filter conduit.CommentFilter) (int, error) {
+	logger := conduit.GetLogger(ctx)
+
 	if filter.SiteID == nil {
 		return -1, fmt.Errorf("need SiteID for count query")
 	}
@@ -129,21 +122,24 @@ func (cs *CommentService) NrComments(ctx context.Context, filter conduit.Comment
 
 	result, err := cs.Client.Query(ctx, query)
 	if err != nil {
-		logDynamoDBError(ctx, err, "query comments")
+		msg, attrs := expandAWSError(err, "query comments")
+		logger.ErrorContext(ctx, msg, attrs...)
 		return -1, err
 	}
 
 	var comments []DynamoComment
 	err = attributevalue.UnmarshalListOfMaps(result.Items, &comments)
 	if err != nil {
-		logDynamoDBError(ctx, err, "unmarshall")
-		return -1, err
+		msg, attrs := expandAWSError(err, "unmarshall")
+		logger.ErrorContext(ctx, msg, attrs...)
 	}
 
 	return len(comments), nil
 }
 
 func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment) error {
+	logger := conduit.GetLogger(ctx)
+
 	item, err := attributevalue.MarshalMap(commentToDynamoItem(*c))
 	if err != nil {
 		return fmt.Errorf("failed to marshal comment: %v", err)
@@ -156,8 +152,9 @@ func (cs *CommentService) UpsertComment(ctx context.Context, c *conduit.Comment)
 
 	_, err = cs.Client.PutItem(ctx, input)
 	if err != nil {
-		logDynamoDBError(ctx, err, "PutItem")
-		return fmt.Errorf("failed to put item in DynamoDB: %v", err)
+		msg, attrs := expandAWSError(err, "PutItem")
+		logger.ErrorContext(ctx, msg, attrs...)
+		return fmt.Errorf("failed to put item in DynamoDB: %v due to %v", err, attrs)
 	}
 
 	return nil
@@ -215,14 +212,16 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 
 	result, err := cs.Client.Query(ctx, query)
 	if err != nil {
-		logDynamoDBError(ctx, err, "query comments")
+		msg, attrs := expandAWSError(err, "query comments")
+		logger.ErrorContext(ctx, msg, attrs...)
 		return empty, err
 	}
 
 	var dynamoComments []DynamoComment
 	err = attributevalue.UnmarshalListOfMaps(result.Items, &dynamoComments)
 	if err != nil {
-		logDynamoDBError(ctx, err, "unmarshall")
+		msg, attrs := expandAWSError(err, "unmarshall")
+		logger.ErrorContext(ctx, msg, attrs...)
 		return empty, err
 	}
 
@@ -235,6 +234,7 @@ func (cs *CommentService) Comments(ctx context.Context, commentFilter conduit.Co
 }
 
 func (cs *CommentService) DeleteComment(ctx context.Context, comment *conduit.Comment) error {
+	logger := conduit.GetLogger(ctx)
 
 	input := &dynamodb.DeleteItemInput{
 		TableName: aws.String(cs.DynamoDBTableName),
@@ -244,7 +244,8 @@ func (cs *CommentService) DeleteComment(ctx context.Context, comment *conduit.Co
 		},
 	}
 	_, err := cs.Client.DeleteItem(ctx, input)
-	logDynamoDBError(ctx, err, "DeleteItem")
+	msg, attrs := expandAWSError(err, "DeleteItem")
+	logger.ErrorContext(ctx, msg, attrs...)
 
 	return err
 }
