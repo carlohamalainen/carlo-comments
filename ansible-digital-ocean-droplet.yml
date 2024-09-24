@@ -1,6 +1,6 @@
 ---
 
-- name: build xcaddy locally
+- name: build binaries
   hosts: localhost
   connection: local
 
@@ -35,6 +35,7 @@
           - zip
           - unzip
           - rsync
+          - iftop
           - htop
           - btop
           - sqlite3
@@ -85,12 +86,6 @@
         key: "{{ lookup('file', '~/.ssh/prompt-ios.pub') }}"
         state: present
 
-    - name: Stop carlo-comments service
-      systemd:
-        name: carlo-comments
-        state: stopped
-      ignore_errors: yes
-
     - name: Copy carlo-comments-linux-amd64
       copy:
         src: api/carlo-comments-linux-amd64
@@ -100,12 +95,51 @@
         mode: 0755
 
     - name: Create carlo-comments systemd service file
-      template:
-        src: carlo-comments.service.j2
+      copy:
+        content: |
+          [Unit]
+          Description=Carlo Comments Service
+          After=network.target
+
+          [Service]
+          ExecStart=/home/app/carlo-comments-linux-amd64
+          User=app
+          Group=app
+          Environment=LOG_DIRECTORY={{ lookup('env', 'LOG_DIRECTORY_DROPLET')}}
+          Environment=CORS_ALLOWED_ORIGINS={{ lookup('env', 'CORS_ALLOWED_ORIGINS_DROPLET')}}
+          Environment=HANDLER_TIMEOUT="5s"
+          Environment=LIMITER_RATE=100
+          Environment=LIMITER_BURST=50
+          Environment=PORT={{ lookup('env', 'PORT')}}
+          Environment=APP_NAME={{ lookup('env', 'APP_NAME')}}
+          Environment=COMMENT_HOST={{ lookup('env', 'COMMENT_HOST')}}
+          Environment=AWS_ACCESS_KEY_ID={{ lookup('env', 'AWS_ACCESS_KEY_ID')}}
+          Environment=AWS_SECRET_ACCESS_KEY={{ lookup('env', 'AWS_SECRET_ACCESS_KEY')}}
+          Environment=HMAC_SECRET={{ lookup('env', 'HMAC_SECRET')}}
+          Environment=ADMIN_USER={{ lookup('env', 'ADMIN_USER')}}
+          Environment=ADMIN_PASS={{ lookup('env', 'ADMIN_PASS')}}
+          # Environment=S3_REGION={{ lookup('env', 'S3_REGION')}}
+          # Environment=S3_BUCKET={{ lookup('env', 'S3_BUCKET')}}
+          Environment=DYNAMODB_TABLE_NAME={{ lookup('env', 'DYNAMODB_TABLE_NAME')}}
+          Environment=DYNAMODB_REGION={{ lookup('env', 'DYNAMODB_REGION')}}
+          Environment=SES_IDENTITY={{ lookup('env', 'SES_IDENTITY')}}
+          Environment=CF_SITE_KEY={{ lookup('env', 'CF_SITE_KEY')}}
+          Environment=CF_SECRET_KEY={{ lookup('env', 'CF_SECRET_KEY')}}
+          Restart=always
+          RestartSec=10
+
+          [Install]
+          WantedBy=default.target
         dest: /etc/systemd/system/carlo-comments.service
         owner: root
         group: root
         mode: 0644
+
+    - name: Stop carlo-comments service
+      systemd:
+        name: carlo-comments
+        state: stopped
+      ignore_errors: yes
 
     - name: Reload systemd daemon
       systemd:
@@ -123,12 +157,6 @@
         name: carlo-comments
         state: started
       become: yes
-
-    - name: Stop Caddy service
-      systemd:
-        name: caddy
-        state: stopped
-      ignore_errors: yes
 
     - name: copy caddy binary to server
       copy:
@@ -159,8 +187,33 @@
         recurse: yes
 
     - name: Create Caddyfile
-      template:
-        src: Caddyfile.j2
+      copy:
+        content: |
+          {{ lookup('env', 'API_HOST') }} {
+              # route /admin/* {
+              #     uri strip_prefix /admin
+              #     root * /home/app/elm-admin
+              #     file_server
+              #     try_files {path} index.html
+              # }
+
+              route /v1/* {
+                  reverse_proxy {{ lookup('env', 'PORT') }}
+              }
+
+              tls {
+                  dns digitalocean {{ lookup('env', 'DO_DNS_TOKEN') }}
+
+                  # ... solving challenges: presenting for challenge: could not determine zone for
+                  # domain \"_acme-challenge.aaa.aaaaaaaa.aaa\": unexpected response code 'SERVFAIL'
+                  # for _acme-challenge.aaa.aaaaaaaa.aaa.
+
+                  # Tailscale DNS doesn't work with Lets Encrypt?
+
+                  resolvers 8.8.8.8 8.8.4.4
+
+              }
+          }
         dest: /etc/caddy/Caddyfile
         owner: root
         group: root
@@ -170,6 +223,12 @@
       get_url:
         url: https://raw.githubusercontent.com/caddyserver/dist/master/init/caddy.service
         dest: /etc/systemd/system/caddy.service
+
+    - name: Stop Caddy service
+      systemd:
+        name: caddy
+        state: stopped
+      ignore_errors: yes
 
     - name: Reload systemd daemon
       systemd:
@@ -204,7 +263,7 @@
 
     - name: Download Promtail zip file
       get_url:
-        url: https://github.com/grafana/loki/releases/download/v2.9.8/promtail-linux-amd64.zip
+        url: https://github.com/grafana/loki/releases/download/v2.9.10/promtail-linux-amd64.zip
         dest: "{{ app_home }}/promtail/promtail-linux-amd64.zip"
         owner: app
         group: app
@@ -220,8 +279,38 @@
         mode: 0755
 
     - name: Copy Promtail configuration file
-      template:
-        src: promtail-config.yaml.j2
+      copy:
+        content: |
+          server:
+            http_listen_port: 9080
+            grpc_listen_port: 0
+
+          positions:
+            filename: /home/app/promtail/positions.yaml
+
+          clients:
+            - url: {{ lookup('env', 'LOKI_URL') }}
+              basic_auth:
+                username: {{ lookup('env', 'LOKI_USER') }}
+                password: {{ lookup('env', 'LOKI_API_TOKEN') }}
+
+          scrape_configs:
+            - job_name: system
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: carlo-comments-api
+                    __path__: /home/app/logs/*.log
+
+            - job_name: systemd
+              journal:
+                max_age: 12h
+                labels:
+                  job: systemd-journal
+              relabel_configs:
+                - source_labels: ['__journal__systemd_unit']
+                  target_label: 'unit'
         dest: "{{ app_home }}/promtail/config.yaml"
         owner: app
         group: app
@@ -236,17 +325,75 @@
         mode: 0700
 
     - name: Copy Promtail systemd logging configuration file
-      template:
-        src: systemd-promtail.conf
+      copy:
+        content: |
+          [Journal]
+          ForwardToSyslog=no
+          ForwardToWall=no
+          MaxLevelSyslog=debug
+          MaxLevelConsole=debug
+          MaxLevelWall=emerg
+
+          [Match]
+          _SYSTEMD_UNIT=carlo-comments.service
+
+          [Install]
+          WantedBy=multi-user.target
         dest: /etc/systemd/journald.conf.d/promtail.conf
         owner: root
         group: root
         mode: 0755
 
     - name: Create Promtail systemd service
-      template:
-        src: promtail.service.j2
+      copy:
+        content: |
+          [Unit]
+          Description=Promtail Service
+          After=network.target
+
+          [Service]
+          ExecStart=/home/app/promtail/promtail-linux-amd64 --config.file=/home/app/promtail/config.yaml
+          User=app
+          Group=app
+          Restart=always
+          RestartSec=10
+
+          [Install]
+          WantedBy=default.target
         dest: /etc/systemd/system/promtail.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Create log_cleanup.service
+      copy:
+        content: |
+          [Unit]
+          Description=Delete old log files
+
+          [Service]
+          Type=oneshot
+          User=app
+          Group=app
+          ExecStart=/usr/bin/find {{ app_home }}/logs -type f -mtime +30 -delete
+        dest: /etc/systemd/system/log_cleanup.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Create log_cleanup.timer
+      copy:
+        content: |
+          [Unit]
+          Description=Run log_cleanup daily
+
+          [Timer]
+          OnCalendar=daily
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/log_cleanup.timer
         owner: root
         group: root
         mode: 0644
@@ -273,18 +420,9 @@
         state: started
       become: yes
 
-    # - name: Create elm-admin directory
-    #   file:
-    #     path: "{{ elm_deploy_dir }}"
-    #     state: directory
-    #     owner: app
-    #     group: app
-    #     mode: 0755
-
-    # - name: index.html
-    #   template:
-    #     src: elm-admin/index.html
-    #     dest: "{{ elm_deploy_dir }}"
-    #     owner: root
-    #     group: root
-    #     mode: 0644
+    - name: Enable and start log_cleanup timer
+      systemd:
+        name: log_cleanup.timer
+        enabled: yes
+        state: started
+      become: yes
